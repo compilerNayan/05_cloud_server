@@ -1,0 +1,6 @@
+#ifndef CLOUD_SERVER_CLOUD_SERVER_THREAD_INCLUDE_H
+#define CLOUD_SERVER_CLOUD_SERVER_THREAD_INCLUDE_H
+
+#include "../../internal/03-thread/01-CloudServerThread.h"
+
+#endif // CLOUD_SERVER_CLOUD_SERVER_THREAD_INCLUDE_H
