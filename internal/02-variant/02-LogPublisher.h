@@ -7,7 +7,7 @@
 #define CLOUD_SERVER_LOG_PUBLISHER_H
 
 #include "../01-interface/02-ILogPublisher.h"
-#include <IFirebaseFacade.h>
+#include <firebase/IFirebaseFacade.h>
 #include <ILogBuffer.h>
 #include <ILogger.h>
 #include <IInternetConnectionStatusProvider.h>
