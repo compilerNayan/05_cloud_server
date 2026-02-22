@@ -14,6 +14,7 @@
 #include <IHttpRequestQueue.h>
 #include <IHttpResponseQueue.h>
 #include <IHttpResponse.h>
+#include <firebase/IFirebaseFacade.h>
 #include <string>
 
 #include "../01-interface/01-ICloudServerChannel.h"
@@ -29,6 +30,9 @@ class CloudServerChannel final : public ICloudServerChannel {
     Private IHttpRequestQueuePtr requestQueue;
     /* @Autowired */
     Private IHttpResponseQueuePtr responseQueue;
+
+    /* @Autowired */
+    Private IFirebaseFacadePtr firebaseFacade;
 
     Private IServerPtr server_;
 
@@ -64,6 +68,13 @@ class CloudServerChannel final : public ICloudServerChannel {
             server_->Stop();
             server_->Start(DEFAULT_SERVER_PORT);
             lastInternetConnectionId_ = internetConnectionId;
+        }
+        // Hack below. Fix it later
+        if(firebaseFacade && firebaseFacade->IsDirty()) {
+            logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: Firebase operations are dirty"));
+            server_->Stop();
+            server_->Start(DEFAULT_SERVER_PORT);
+            return false;
         }
         if (!server_->IsRunning()) {
             logger->Warning(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: server not running"));

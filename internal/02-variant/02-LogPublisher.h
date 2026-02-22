@@ -59,6 +59,12 @@ class LogPublisher final : public ILogPublisher {
             }
             lastInternetConnectionId_ = internetConnectionId;
         }
+        if(firebaseFacade && firebaseFacade->IsDirty()) {
+            logger->Info(Tag::Untagged, StdString("[LogPublisher] PreCheck skip: Firebase operations are dirty"));
+            firebaseFacade->StopFirebaseOperations();
+            firebaseFacade->StartFirebaseOperations();
+            return false;
+        }
         return true;
     }
 
