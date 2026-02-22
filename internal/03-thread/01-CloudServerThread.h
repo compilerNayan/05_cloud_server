@@ -17,6 +17,7 @@ class CloudServerThread final : public IRunnable {
 
     Public Void Run() override {
         cloudServerChannel->ProcessRequestAndResponse();
+        Thread::Sleep(100);
     }
 };
 
