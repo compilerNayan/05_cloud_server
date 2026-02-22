@@ -10,6 +10,7 @@
 #include <StandardDefines.h>
 #include <IRunnable.h>
 #include <osal/Core.h>
+#include <ILogger.h>
 
 #include "../01-interface/02-ILogPublisher.h"
 
@@ -20,15 +21,14 @@ class LogPublisherThread final : public IRunnable {
 
     /* @Autowired */
     Private ILogPublisherPtr logPublisher;
-    Private ULong lastRunMs_{0};
+
+    /* @Autowired */
+    Private ILoggerPtr logger;
 
     Public Void Run() override {
-        if (!logPublisher) return;
-        ULong now = OSAL_GetMillis();
-        if (now - lastRunMs_ >= kLogPublisherIntervalMs) {
-            logPublisher->PublishLogs();
-            lastRunMs_ = now;
-        }
+        logger->Info(Tag::Untagged, StdString("[LogPublisherThread] Publishing logs"));
+        logPublisher->PublishLogs();
+        Thread::Sleep(60 * 1000);
     }
 };
 
