@@ -38,6 +38,8 @@ class CloudServerChannel final : public ICloudServerChannel {
 
     /** Last known internet connection id; when it changes we restart the server. */
     Private ULong lastInternetConnectionId_{0};
+    /** True after we've logged once for current "id == 0" period; reset when id becomes non-zero. */
+    Private Bool loggedNoInternetOnce_{false};
 
     /**
      * Returns true if we may send/receive: internet connected (id != 0), server restarted if id changed, server valid.
@@ -57,20 +59,25 @@ class CloudServerChannel final : public ICloudServerChannel {
         if(!internetStatusProvider->IsWiFiConnected()) {
             return false;
         }
-        if (!internetStatusProvider->IsInternetConnected()) {
-            logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: no internet"));
-            return false;
-        }
         ULong internetConnectionId = internetStatusProvider->GetInternetConnectionId();
         if (internetConnectionId == 0) {
-            logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: internet connection id 0"));
+            if (!loggedNoInternetOnce_) {
+                logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: no internet (connection id 0)"));
+                loggedNoInternetOnce_ = true;
+            }
+            lastInternetConnectionId_ = internetConnectionId;
             return false;
         }
+        loggedNoInternetOnce_ = false;  // next time we go to 0 we'll log again
         if (internetConnectionId != lastInternetConnectionId_) {
             logger->Info(Tag::Untagged, StdString("[CloudServerChannel] Restarting server: internet connection id changed ") + std::to_string(lastInternetConnectionId_) + " -> " + std::to_string(internetConnectionId));
             server_->Stop();
             server_->Start(DEFAULT_SERVER_PORT);
             lastInternetConnectionId_ = internetConnectionId;
+        }
+        if (!internetStatusProvider->IsInternetConnected()) {
+            logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: no internet"));
+            return false;
         }
         // Hack below. Fix it later
         if(firebaseFacade && firebaseFacade->IsDirty()) {

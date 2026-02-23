@@ -27,7 +27,6 @@ class LogPublisherThread final : public IRunnable {
 
     Public Void Run() override {
         while (true) {
-            logger->Info(Tag::Untagged, StdString("[LogPublisherThread] Publishing logs"));
             logPublisher->PublishLogs();
             Thread::Sleep(60 * 1000);
         }
