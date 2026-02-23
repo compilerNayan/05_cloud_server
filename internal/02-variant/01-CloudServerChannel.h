@@ -54,6 +54,9 @@ class CloudServerChannel final : public ICloudServerChannel {
         if(internetStatusProvider->IsHotspotConnected()) {
             return false;
         }
+        if(!internetStatusProvider->IsWiFiConnected()) {
+            return false;
+        }
         if (!internetStatusProvider->IsInternetConnected()) {
             logger->Info(Tag::Untagged, StdString("[CloudServerChannel] PreCheck skip: no internet"));
             return false;
