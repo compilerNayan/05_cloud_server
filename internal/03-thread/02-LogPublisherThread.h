@@ -26,6 +26,7 @@ class LogPublisherThread final : public IRunnable {
     Private ILoggerPtr logger;
 
     Public Void Run() override {
+        Thread::Sleep(10000);
         while (true) {
             logPublisher->PublishLogs();
             Thread::Sleep(60 * 1000);

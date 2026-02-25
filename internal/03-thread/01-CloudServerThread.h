@@ -16,6 +16,7 @@ class CloudServerThread final : public IRunnable {
     Private ICloudServerChannelPtr cloudServerChannel;
 
     Public Void Run() override {
+        Thread::Sleep(9000);
         while (true) {
             cloudServerChannel->ProcessRequestAndResponse();
             Thread::Sleep(100);
