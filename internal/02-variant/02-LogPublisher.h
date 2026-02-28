@@ -1,13 +1,13 @@
 /**
  * @file 02-LogPublisher.h
- * @brief Publishes logs from ILogBuffer to Firebase via IFirebaseFacade.
+ * @brief Publishes logs from ILogBuffer to cloud via ICloudFacade.
  */
 
 #ifndef CLOUD_SERVER_LOG_PUBLISHER_H
 #define CLOUD_SERVER_LOG_PUBLISHER_H
 
 #include "../01-interface/02-ILogPublisher.h"
-#include <firebase/IFirebaseFacade.h>
+#include <cloud/ICloudFacade.h>
 #include <ILogBuffer.h>
 #include <ILogger.h>
 #include <IInternetConnectionStatusProvider.h>
@@ -15,11 +15,11 @@
 /* @Component */
 class LogPublisher final : public ILogPublisher {
 
-    /** Max logs per Firebase publish (match Firebase payload limit). */
+    /** Max logs per cloud publish. */
     Static const Size kMaxLogsPerPublish = 30;
 
     /* @Autowired */
-    Private IFirebaseFacadePtr firebaseFacade;
+    Private ICloudFacadePtr cloudFacade;
     /* @Autowired */
     Private ILogBufferPtr logBuffer;
 
@@ -29,11 +29,11 @@ class LogPublisher final : public ILogPublisher {
     /* @Autowired */
     Private IInternetConnectionStatusProviderPtr internetStatusProvider;
 
-    /** Last known internet connection id; when it changes we restart Firebase operations. */
+    /** Last known internet connection id; when it changes we restart cloud operations. */
     Private ULong lastInternetConnectionId_{0};
 
     /**
-     * Returns true if we may publish: internet connected (id != 0), Firebase operations restarted if id changed.
+     * Returns true if we may publish: internet connected (id != 0), cloud operations restarted if id changed.
      */
     Private Bool PreCheck() {
         if (logger == nullptr) return false;
@@ -52,17 +52,17 @@ class LogPublisher final : public ILogPublisher {
             return false;
         }
         if (internetConnectionId != lastInternetConnectionId_) {
-            logger->Info(Tag::Untagged, StdString("[LogPublisher] Restarting Firebase operations: internet connection id changed ") + std::to_string(lastInternetConnectionId_) + " -> " + std::to_string(internetConnectionId));
-            if (firebaseFacade) {
-                firebaseFacade->StopFirebaseOperations();
-                firebaseFacade->StartFirebaseOperations();
+            logger->Info(Tag::Untagged, StdString("[LogPublisher] Restarting cloud operations: internet connection id changed ") + std::to_string(lastInternetConnectionId_) + " -> " + std::to_string(internetConnectionId));
+            if (cloudFacade) {
+                cloudFacade->StopCloudOperations();
+                cloudFacade->StartCloudOperations();
             }
             lastInternetConnectionId_ = internetConnectionId;
         }
-        if(firebaseFacade && firebaseFacade->IsDirty()) {
-            logger->Info(Tag::Untagged, StdString("[LogPublisher] PreCheck skip: Firebase operations are dirty"));
-            firebaseFacade->StopFirebaseOperations();
-            firebaseFacade->StartFirebaseOperations();
+        if(cloudFacade && cloudFacade->IsDirty()) {
+            logger->Info(Tag::Untagged, StdString("[LogPublisher] PreCheck skip: cloud operations are dirty"));
+            cloudFacade->StopCloudOperations();
+            cloudFacade->StartCloudOperations();
             return false;
         }
         return true;
@@ -70,12 +70,12 @@ class LogPublisher final : public ILogPublisher {
 
     Public Bool PublishLogs() override {
         if (!PreCheck()) return false;
-        if (!firebaseFacade || !logBuffer) return false;
+        if (!cloudFacade || !logBuffer) return false;
         for (;;) {
             StdMap<ULongLong, StdString> logs = logBuffer->TakeLogsAtMost(kMaxLogsPerPublish);
             if (logs.empty()) return true;
-            FirebaseOperationResult res = firebaseFacade->PublishLogs(logs);
-            if (res != FirebaseOperationResult::OperationSucceeded) {
+            Bool ok = cloudFacade->PublishLogs(logs);
+            if (!ok) {
                 logBuffer->AddLogs(logs);
                 return false;
             }
