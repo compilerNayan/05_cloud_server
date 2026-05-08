@@ -15,8 +15,8 @@
 /* @Component */
 class LogPublisher final : public ILogPublisher {
 
-    /** Max logs per cloud publish. */
-    Static const Size kMaxLogsPerPublish = 30;
+    /** Approx max payload bytes per cloud publish. */
+    Static const Size kApproxMaxBytesPerPublish = 4700;
 
     /* @Autowired */
     Private ICloudFacadePtr cloudFacade;
@@ -72,7 +72,7 @@ class LogPublisher final : public ILogPublisher {
         if (!PreCheck()) return false;
         if (!cloudFacade || !logBuffer) return false;
         for (;;) {
-            StdMap<ULongLong, StdString> logs = logBuffer->TakeLogsAtMost(kMaxLogsPerPublish);
+            StdMap<ULongLong, StdString> logs = logBuffer->TakeLogsByApproxBytes(kApproxMaxBytesPerPublish);
             if (logs.empty()) return true;
             Bool ok = cloudFacade->PublishLogs(logs);
             if (!ok) {
