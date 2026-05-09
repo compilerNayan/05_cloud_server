@@ -16,7 +16,8 @@
 class LogPublisher final : public ILogPublisher {
 
     /** Approx max payload bytes per cloud publish. */
-    Static const Size kApproxMaxBytesPerPublish = 4700;
+    // Smaller batch lowers transient JSON/TLS pressure on ESP32 heap.
+    Static const Size kApproxMaxBytesPerPublish = 1800;
 
     /* @Autowired */
     Private ICloudFacadePtr cloudFacade;
